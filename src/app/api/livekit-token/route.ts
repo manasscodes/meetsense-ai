@@ -1,53 +1,61 @@
-import { AccessToken } from "livekit-server-sdk";
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
-import { headers } from "next/headers";
+import { AccessToken } from "livekit-server-sdk";
+import { jwtDecode } from "jwt-decode";
+import { auth } from "@/lib/auth"; // Import your auth instance
 
 export async function POST(req: NextRequest) {
-  // 1. Authenticate user
-  const session = await auth.api.getSession({
-    headers: await headers()
-  });
-
-  if (!session) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
+  // Add these 3 lines temporarily
+console.log("DEBUG KEY:", process.env.LIVEKIT_API_KEY);
+console.log("DEBUG SECRET:", process.env.LIVEKIT_API_SECRET ? "FOUND" : "MISSING");
+console.log("DEBUG URL:", process.env.NEXT_PUBLIC_LIVEKIT_URL);
   try {
-    const { roomName, participantName } = await req.json();
+    // 1. Get the session to ensure user is logged in
+    const session = await auth.api.getSession({ headers: req.headers });
 
-    if (!roomName || !participantName) {
-      return NextResponse.json(
-        { error: "Missing roomName or participantName" },
-        { status: 400 }
-      );
+    if (!session || !session.user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    // 2. Parse room name from request
+    const { roomName } = await req.json();
+
+    if (!roomName) {
+      return NextResponse.json({ error: "Room name is required" }, { status: 400 });
+    }
+
+    // 3. Create the Access Token
+    // CRITICAL FIX: Use session.user.id as 'identity' to guarantee uniqueness.
+    // Use session.user.name as 'name' for display purposes.
     const apiKey = process.env.LIVEKIT_API_KEY;
     const apiSecret = process.env.LIVEKIT_API_SECRET;
 
     if (!apiKey || !apiSecret) {
-      return NextResponse.json(
-        { error: "Server misconfigured: missing LiveKit keys" },
-        { status: 500 }
-      );
+      throw new Error("LiveKit API Key or Secret missing");
     }
 
-    // 2. Create Access Token
-    const at = new AccessToken(apiKey, apiSecret, {
-      identity: participantName,
+    const token = new AccessToken(apiKey, apiSecret, {
+      identity: session.user.id, // Unique ID (fixes the collision bug)
+      name: session.user.name || "User", // Display Name
     });
 
-    at.addGrant({
-      roomJoin: true,
+    // 4. Add grants
+    token.addGrant({
       room: roomName,
+      roomJoin: true,
       canPublish: true,
       canSubscribe: true,
+      canPublishData: true,
     });
 
-    return NextResponse.json({ token: await at.toJwt() });
+    // 5. Return the JWT
+    const tokenValue = await token.toJwt();
+    const decoded = jwtDecode(tokenValue);
+    console.log("DEBUG TOKEN PAYLOAD:", JSON.stringify(decoded, null, 2));
+
+    return NextResponse.json({ token: tokenValue });
+
   } catch (error) {
-    console.error("LiveKit token error:", error);
+    console.error("Error generating LiveKit token:", error);
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }
