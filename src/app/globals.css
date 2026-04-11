@@ -4,9 +4,8 @@
 
 @layer base {
   :root {
-    /* Your Neon-Minimal Palette mapped to CSS Variables */
-    --background: 45 10% 96%;   /* #F6F6F3 */
-    --foreground: 0 0% 7%;      /* #111111 */
+    --background: 45 10% 96%; /* #F6F6F3 */
+    --foreground: 0 0% 7%;    /* #111111 */
 
     --card: 0 0% 100%;
     --card-foreground: 0 0% 7%;
@@ -14,47 +13,35 @@
     --popover: 0 0% 100%;
     --popover-foreground: 0 0% 7%;
 
-    --primary: 0 0% 7%;         /* #111111 */
+    --primary: 0 0% 7%;
     --primary-foreground: 0 0% 98%;
 
-    --secondary: 45 5% 92%;     /* #F0F0ED */
+    --secondary: 45 5% 92%; /* #F0F0ED */
     --secondary-foreground: 0 0% 7%;
 
-    --muted: 0 0% 42%;          /* #6B6B6B */
+    --muted: 0 0% 42%; /* #6B6B6B */
     --muted-foreground: 0 0% 7%;
 
-    --accent: 77 100% 61%;      /* #B8FF3B */
+    --accent: 77 100% 61%; /* #B8FF3B */
     --accent-foreground: 0 0% 7%;
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 98%;
 
-    --border: 30 10% 92%;       /* #EAEAEA */
+    --border: 30 10% 92%; /* #EAEAEA */
     --input: 30 10% 92%;
     --ring: 77 100% 61%;
 
     --radius: 1.5rem;
   }
-
-  /* Optional: Dark mode variables can go here if needed later */
-  .dark {
-    --background: 0 0% 7%;
-    --foreground: 45 10% 96%;
-    /* ... define other dark mode values ... */
-  }
 }
 
 @layer base {
   * {
-    /* FIX: Using direct CSS variable instead of @apply utility class */
-    border-color: hsl(var(--border));
+    @apply border-border;
   }
-  
   body {
-    background-color: hsl(var(--background));
-    color: hsl(var(--foreground));
-    font-family: 'Inter', system-ui, sans-serif;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
+    @apply bg-background text-foreground antialiased;
+    font-feature-settings: "rlig" 1, "calt" 1;
   }
 }
