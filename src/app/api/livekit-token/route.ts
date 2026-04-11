@@ -5,9 +5,6 @@ import { auth } from "@/lib/auth"; // Import your auth instance
 
 export async function POST(req: NextRequest) {
   // Add these 3 lines temporarily
-console.log("DEBUG KEY:", process.env.LIVEKIT_API_KEY);
-console.log("DEBUG SECRET:", process.env.LIVEKIT_API_SECRET ? "FOUND" : "MISSING");
-console.log("DEBUG URL:", process.env.NEXT_PUBLIC_LIVEKIT_URL);
   try {
     // 1. Get the session to ensure user is logged in
     const session = await auth.api.getSession({ headers: req.headers });
