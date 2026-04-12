@@ -43,7 +43,7 @@ export default async function DashboardLayout({
             <div className="w-10 h-10 rounded-xl bg-[#B8FF3B] flex items-center justify-center shadow-gloweffect group-hover:scale-105 transition-transform">
               <span className="font-black text-lg text-[#111111]">M</span>
             </div>
-            <span className="font-bold text-xl tracking-tight text-[#111111]">MeetSense</span>
+            <span className="font-bold text-xl tracking-tight text-[#111111]">MeetSense AI</span>
           </Link>
         </div>
 
