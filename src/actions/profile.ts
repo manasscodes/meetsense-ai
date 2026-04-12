@@ -1,63 +1,82 @@
 "use server";
 
-import { auth } from "@/lib/auth";
+import { auth } from "@clerk/nextjs/server";
 import { db } from "@/lib/db";
-import { profile } from "@/lib/db/schema";
+import { profile as profileTable } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
-import { headers } from "next/headers";
-import { redirect } from "next/navigation";
-import { revalidatePath } from "next/cache";
 
-export async function updateProfile(formData: {
-  role: "interviewee" | "interviewer";
+export async function updateProfile(data: {
+  role: "interviewer" | "interviewee";
   jobTitle: string;
   experience: string;
-  preferredLanguage: string;
-  domain?: string;
 }) {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
-
-  if (!session) {
-    throw new Error("Unauthorized");
-  }
-
-  const userId = session.user.id;
-
   try {
-    // Generate a simple ID for the profile row
-    const profileId = crypto.randomUUID();
+    const { userId } = await auth();
 
-    // Upsert logic: insert if not exists, update if it does
-    // We target userId since we added a unique constraint to it
-    await db.insert(profile)
-      .values({
-        id: profileId,
-        userId: userId,
-        role: formData.role,
-        jobTitle: formData.jobTitle,
-        experience: formData.experience,
-        preferredLanguage: formData.preferredLanguage,
-        domain: formData.domain || "",
-      })
-      .onConflictDoUpdate({
-        target: profile.userId,
-        set: {
-          role: formData.role,
-          jobTitle: formData.jobTitle,
-          experience: formData.experience,
-          preferredLanguage: formData.preferredLanguage,
-          domain: formData.domain || "",
-        },
+    if (!userId) {
+      throw new Error("Unauthorized");
+    }
+
+    // 1. Check if profile already exists
+    const existingProfile = await db.query.profile.findFirst({
+      where: eq(profileTable.userId, userId),
+    });
+
+    if (existingProfile) {
+      // Update existing profile
+      await db.update(profileTable)
+        .set({
+          role: data.role,
+          jobTitle: data.jobTitle,
+          experience: data.experience,
+        })
+        .where(eq(profileTable.userId, userId));
+    } else {
+      // Create new profile
+      await db.insert(profileTable).values({
+        id: crypto.randomUUID(),
+        userId,
+        role: data.role,
+        jobTitle: data.jobTitle,
+        experience: data.experience,
       });
+    }
 
-    revalidatePath("/dashboard");
-    revalidatePath("/onboarding");
+    return { success: true };
   } catch (error) {
     console.error("Error updating profile:", error);
-    return { error: "Failed to update profile. Please try again." };
+    return { success: false, error: "Failed to update profile" };
   }
+}
 
-  redirect("/dashboard");
+export async function getUserProfile() {
+  try {
+    const { userId } = await auth();
+    if (!userId) return null;
+
+    const userProfile = await db.query.profile.findFirst({
+      where: eq(profileTable.userId, userId),
+    });
+
+    return userProfile || null;
+  } catch (error) {
+    console.error("Error fetching user profile:", error);
+    return null;
+  }
+}
+
+export async function deleteProfile() {
+  try {
+    const { userId } = await auth();
+    if (!userId) {
+      throw new Error("Unauthorized");
+    }
+
+    await db.delete(profileTable).where(eq(profileTable.userId, userId));
+
+    return { success: true };
+  } catch (error) {
+    console.error("Error deleting profile:", error);
+    return { success: false, error: "Failed to reset profile" };
+  }
 }

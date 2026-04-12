@@ -1,185 +1,143 @@
-"use client";
+'use client';
 
-import { useState, useTransition } from "react";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { Briefcase, GraduationCap, ArrowRight, User } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { updateProfile } from "@/actions/profile";
-import { User, Briefcase, GraduationCap, Languages, Check } from "lucide-react";
-import { cn } from "@/lib/utils";
 
 export default function OnboardingPage() {
-  const [isPending, startTransition] = useTransition();
-  const [error, setError] = useState<string | null>(null);
-
-  // Form State
-  const [role, setRole] = useState<"interviewee" | "interviewer">("interviewee");
+  const router = useRouter();
+  const [role, setRole] = useState<"interviewer" | "interviewee" | null>(null);
   const [jobTitle, setJobTitle] = useState("");
-  const [experience, setExperience] = useState("Fresher");
-  const [language, setLanguage] = useState("English");
+  const [experience, setExperience] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null);
+    if (!role || !jobTitle || !experience) return;
 
-    startTransition(async () => {
-      const result = await updateProfile({
-        role,
-        jobTitle,
-        experience,
-        preferredLanguage: language,
-      });
+    setLoading(true);
+    const result = await updateProfile({ role, jobTitle, experience });
+    setLoading(false);
 
-      if (result?.error) {
-        setError(result.error);
-      }
-    });
-  }
+    if (result.success) {
+      router.push("/dashboard");
+    } else {
+      alert("Failed to save profile. Please try again.");
+    }
+  };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#F6F6F3] px-4 py-12">
-      <div className="w-full max-w-md">
-        {/* Header */}
-        <div className="text-center mb-10">
-          <h1 className="text-3xl font-black text-[#111111] tracking-tight mb-2">
-            Complete Your Profile
+    <div className="min-h-screen bg-[#F6F6F3] flex items-center justify-center p-6">
+      <div className="max-w-xl w-full bg-white rounded-[2.5rem] shadow-[0_20px_50px_rgba(0,0,0,0.05)] border border-[#EAEAEA] p-10 md:p-14">
+        <div className="text-center mb-12">
+          <div className="w-16 h-16 bg-[#B8FF3B] rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-gloweffect">
+            <span className="font-black text-2xl text-black">M</span>
+          </div>
+          <h1 className="text-3xl font-black text-[#111111] mb-3 tracking-tight">
+            How do you want to use MeetSense?
           </h1>
           <p className="text-[#6B6B6B] font-medium">
-            Help us personalize your interview experience
+            Customize your experience to get the most out of our AI.
           </p>
         </div>
 
-        {/* Card */}
-        <div className="bg-white rounded-3xl p-8 border border-solid border-[#E0E0E0] shadow-soft">
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {error && (
-              <div className="rounded-xl bg-red-50 border border-red-100 px-4 py-3 text-sm text-red-600">
-                {error}
-              </div>
-            )}
+        <form onSubmit={handleSubmit} className="space-y-10">
+          {/* Role Selection */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <RoleCard 
+              active={role === "interviewer"}
+              onClick={() => setRole("interviewer")}
+              icon={<Briefcase size={28} />}
+              title="Interviewer"
+              description="I want to conduct interviews."
+            />
+            <RoleCard 
+              active={role === "interviewee"}
+              onClick={() => setRole("interviewee")}
+              icon={<GraduationCap size={28} />}
+              title="Interviewee"
+              description="I want to practice interviews."
+            />
+          </div>
 
-            {/* Role Selection (Radio Cards) */}
-            <div className="space-y-3">
-              <label className="block text-sm font-bold text-[#111111]">
-                What is your primary role?
-              </label>
-              <div className="grid grid-cols-2 gap-4">
-                <button
-                  type="button"
-                  onClick={() => setRole("interviewee")}
-                  className={cn(
-                    "relative flex flex-col items-center gap-2 p-4 rounded-2xl border-2 transition-all duration-200 text-center",
-                    role === "interviewee"
-                      ? "border-[#B8FF3B] bg-[#B8FF3B]/5 ring-1 ring-[#B8FF3B]"
-                      : "border-[#E0E0E0] bg-white hover:border-[#B8FF3B]/50"
-                  )}
-                >
-                  <User className={cn("w-6 h-6", role === "interviewee" ? "text-[#111111]" : "text-[#6B6B6B]")} />
-                  <span className="text-sm font-bold text-[#111111]">Interviewee</span>
-                  {role === "interviewee" && (
-                     <div className="absolute top-2 right-2 w-4 h-4 rounded-full bg-[#B8FF3B] flex items-center justify-center">
-                        <Check className="w-3 h-3 text-[#111111]" />
-                     </div>
-                  )}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setRole("interviewer")}
-                  className={cn(
-                    "relative flex flex-col items-center gap-2 p-4 rounded-2xl border-2 transition-all duration-200 text-center",
-                    role === "interviewer"
-                      ? "border-[#B8FF3B] bg-[#B8FF3B]/5 ring-1 ring-[#B8FF3B]"
-                      : "border-[#E0E0E0] bg-white hover:border-[#B8FF3B]/50"
-                  )}
-                >
-                  <Briefcase className={cn("w-6 h-6", role === "interviewer" ? "text-[#111111]" : "text-[#6B6B6B]")} />
-                  <span className="text-sm font-bold text-[#111111]">Interviewer</span>
-                  {role === "interviewer" && (
-                     <div className="absolute top-2 right-2 w-4 h-4 rounded-full bg-[#B8FF3B] flex items-center justify-center">
-                        <Check className="w-3 h-3 text-[#111111]" />
-                     </div>
-                  )}
-                </button>
-              </div>
-            </div>
-
-            {/* Job Title */}
-            <div className="space-y-2">
-              <label htmlFor="jobTitle" className="block text-sm font-bold text-[#111111]">
-                Job Title
-              </label>
-              <div className="relative">
-                <Briefcase className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#6B6B6B]" />
-                <input
-                  id="jobTitle"
-                  type="text"
-                  required
-                  value={jobTitle}
-                  onChange={(e) => setJobTitle(e.target.value)}
-                  placeholder="e.g. Software Engineer"
-                  className="w-full rounded-2xl bg-white border border-[#E0E0E0] pl-11 pr-4 py-3.5 text-sm text-[#111111] placeholder-[#9B9B9B] outline-none transition-all duration-200 focus:border-[#B8FF3B] focus:ring-4 focus:ring-[#B8FF3B]/10"
+          {/* Profile Details (Animated entry) */}
+          {role && (
+            <div className="space-y-6 pt-4 animate-in fade-in slide-in-from-top-4 duration-500">
+              <div className="space-y-2">
+                <label className="text-xs font-black uppercase tracking-widest text-[#6B6B6B] ml-1">Job Title</label>
+                <Input 
+                   value={jobTitle}
+                   onChange={(e) => setJobTitle(e.target.value)}
+                   placeholder={role === 'interviewer' ? "e.g. Senior Software Engineer" : "e.g. Frontend Intern"}
+                   className="h-14 rounded-2xl bg-[#F0F0ED] border-none focus-visible:ring-2 focus-visible:ring-[#B8FF3B] text-base font-medium"
+                   required
                 />
               </div>
-            </div>
 
-            {/* Experience & Language */}
-            <div className="grid grid-cols-2 gap-4">
-               <div className="space-y-2">
-                  <label htmlFor="experience" className="block text-sm font-bold text-[#111111]">
-                    Experience
-                  </label>
-                  <div className="relative">
-                    <GraduationCap className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#6B6B6B]" />
-                    <select
-                      id="experience"
-                      value={experience}
-                      onChange={(e) => setExperience(e.target.value)}
-                      className="w-full appearance-none rounded-2xl bg-white border border-[#E0E0E0] pl-11 pr-4 py-3.5 text-sm text-[#111111] outline-none transition-all duration-200 focus:border-[#B8FF3B] focus:ring-4 focus:ring-[#B8FF3B]/10"
-                    >
-                      <option>Fresher</option>
-                      <option>1-3 Years</option>
-                      <option>3-5 Years</option>
-                      <option>5+ Years</option>
-                    </select>
-                  </div>
-               </div>
-               <div className="space-y-2">
-                  <label htmlFor="language" className="block text-sm font-bold text-[#111111]">
-                    Language
-                  </label>
-                  <div className="relative">
-                    <Languages className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[#6B6B6B]" />
-                    <select
-                      id="language"
-                      value={language}
-                      onChange={(e) => setLanguage(e.target.value)}
-                      className="w-full appearance-none rounded-2xl bg-white border border-[#E0E0E0] pl-11 pr-4 py-3.5 text-sm text-[#111111] outline-none transition-all duration-200 focus:border-[#B8FF3B] focus:ring-4 focus:ring-[#B8FF3B]/10"
-                    >
-                      <option>English</option>
-                      <option>Hindi</option>
-                    </select>
-                  </div>
-               </div>
-            </div>
+              <div className="space-y-2">
+                <label className="text-xs font-black uppercase tracking-widest text-[#6B6B6B] ml-1">Experience Level</label>
+                <select 
+                  value={experience}
+                  onChange={(e) => setExperience(e.target.value)}
+                  className="w-full h-14 rounded-2xl bg-[#F0F0ED] border-none focus:ring-2 focus:ring-[#B8FF3B] px-4 text-base font-medium appearance-none cursor-pointer"
+                  required
+                >
+                  <option value="" disabled>Select your experience</option>
+                  <option value="Fresher">Fresher / Student</option>
+                  <option value="1-3 Years">1-3 Years</option>
+                  <option value="3-5 Years">3-5 Years</option>
+                  <option value="5+ Years">5+ Years</option>
+                </select>
+              </div>
 
-            {/* Submit */}
-            <button
-              type="submit"
-              disabled={isPending}
-              className="w-full rounded-2xl py-4 px-6 text-base font-bold text-[#111111] bg-[#B8FF3B] hover:bg-[#A3F52B] hover:shadow-gloweffect disabled:opacity-60 disabled:cursor-not-allowed transition-all duration-300 flex items-center justify-center gap-2 mt-4 active:scale-95"
-            >
-              {isPending ? (
-                <>
-                  <svg className="animate-spin h-5 w-5 text-[#111111]" viewBox="0 0 24 24">
-                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                  </svg>
-                  Saving...
-                </>
-              ) : (
-                "Save & Continue"
-              )}
-            </button>
-          </form>
-        </div>
+              <Button 
+                type="submit"
+                disabled={loading}
+                className="w-full h-16 bg-black text-white hover:bg-gray-800 rounded-2xl text-lg font-black transition-all flex items-center justify-center gap-2 group"
+              >
+                {loading ? "Saving Profile..." : "Get Started"}
+                <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
+              </Button>
+            </div>
+          )}
+        </form>
       </div>
+    </div>
+  );
+}
+
+function RoleCard({ active, onClick, icon, title, description }: { 
+  active: boolean, 
+  onClick: () => void, 
+  icon: React.ReactNode, 
+  title: string, 
+  description: string 
+}) {
+  return (
+    <div 
+      onClick={onClick}
+      className={`relative p-6 rounded-3xl border-2 cursor-pointer transition-all duration-300 group ${
+        active 
+          ? "border-[#B8FF3B] bg-[#B8FF3B]/5 shadow-lg" 
+          : "border-[#EAEAEA] bg-white hover:border-[#B8FF3B]/50 hover:bg-[#F0F0ED]/50"
+      }`}
+    >
+      <div className={`w-12 h-12 rounded-2xl flex items-center justify-center mb-4 transition-colors ${
+        active ? "bg-[#B8FF3B] text-black" : "bg-[#F0F0ED] text-[#6B6B6B] group-hover:bg-[#B8FF3B]/20 group-hover:text-black"
+      }`}>
+        {icon}
+      </div>
+      <h3 className="text-lg font-black text-[#111111] mb-1">{title}</h3>
+      <p className="text-sm font-medium text-[#6B6B6B] leading-tight">{description}</p>
+      
+      {active && (
+        <div className="absolute top-4 right-4 w-6 h-6 bg-[#B8FF3B] rounded-full flex items-center justify-center">
+          <div className="w-2.5 h-2.5 bg-black rounded-full" />
+        </div>
+      )}
     </div>
   );
 }
