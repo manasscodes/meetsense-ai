@@ -1,44 +1,20 @@
 "use client";
 
 import React, { useState } from 'react';
-import { useTranscription } from '@/hooks/useTranscription';
-
 
 interface AIAssistantProps {
   isOpen: boolean;
   onClose: () => void;
-  transcript: string;
-  isListening: boolean;
-  startListening: () => void;
-  stopListening: () => void;
-  mode?: string | null;
-  role?: string | null;
-  domain?: string | null;
-  experience?: string | null;
-  onResponse?: (text: string) => void;
 }
 
-export function AIAssistant({ 
-  isOpen, 
-  onClose,
-  transcript,
-  isListening,
-  startListening,
-  stopListening,
-  mode,
-  role,
-  domain,
-  experience,
-  onResponse
-}: AIAssistantProps) {
-
+export function AIAssistant({ isOpen, onClose }: AIAssistantProps) {
   const [messages, setMessages] = useState([
     { role: 'ai', content: 'Hi! I am your AI meeting assistant. How can I help you today?' }
   ]);
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [hasStartedInterview, setHasStartedInterview] = useState(false);
-  const [lastProcessedText, setLastProcessedText] = useState("");
+
+  if (!isOpen) return null;
 
   const sendMessage = async (text: string) => {
     if (!text.trim() || isLoading) return;
@@ -52,21 +28,12 @@ export function AIAssistant({
       const res = await fetch('/api/ai-agent', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          prompt: text, 
-          context: transcript,
-          mode,
-          role,
-          domain,
-          experience
-        })
+        body: JSON.stringify({ prompt: text, context: "" })
       });
-
       const data = await res.json();
       
       if (data.response) {
         setMessages(prev => [...prev, { role: 'ai', content: data.response }]);
-        if (onResponse) onResponse(data.response);
       } else {
         setMessages(prev => [...prev, { role: 'ai', content: data.error || "Sorry, I couldn't process that." }]);
       }
@@ -76,34 +43,6 @@ export function AIAssistant({
       setIsLoading(false);
     }
   };
-
-  // Auto-Reply Logic for Interview Mode
-  React.useEffect(() => {
-    if (mode !== 'interview' || !transcript.trim() || isLoading) return;
-
-    // Detect new speech since the last send
-    const newText = transcript.slice(lastProcessedText.length).trim();
-    if (!newText) return;
-
-    const timer = setTimeout(() => {
-      console.log("Auto-reply triggering for:", newText);
-      sendMessage(newText);
-      setLastProcessedText(transcript);
-    }, 3000); 
-
-    return () => clearTimeout(timer);
-  }, [transcript, mode, isLoading, lastProcessedText]);
-
-  // Automatic Interview Load
-  React.useEffect(() => {
-    if (mode === 'interview' && !hasStartedInterview && isOpen) {
-      sendMessage(`Start the interview for the role of ${role} in ${domain}.`);
-      setHasStartedInterview(true);
-    }
-  }, [mode, role, domain, hasStartedInterview, isOpen]);
-
-  if (mode === 'interview') return null;
-  if (!isOpen) return null;
 
   const handleSend = () => sendMessage(inputValue);
 
@@ -115,22 +54,18 @@ export function AIAssistant({
           <div className="w-2.5 h-2.5 rounded-full bg-[#B8FF3B] shadow-[0_0_8px_rgba(184,255,59,0.5)]"></div>
           <h3 className="font-bold text-gray-900 tracking-tight">AI Assistant</h3>
         </div>
-        <div className="flex items-center gap-2">
-          <button 
-            onClick={onClose} 
-            className="p-1.5 hover:bg-gray-100 rounded-full transition-colors"
-            aria-label="Close"
-          >
-
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-500">
-              <path d="M13 1L1 13M1 1L13 13" />
-            </svg>
-          </button>
-        </div>
+        <button 
+          onClick={onClose} 
+          className="p-1.5 hover:bg-gray-100 rounded-full transition-colors"
+          aria-label="Close"
+        >
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-gray-500">
+            <path d="M13 1L1 13M1 1L13 13" />
+          </svg>
+        </button>
       </div>
 
       {/* Chat Body */}
-
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {messages.map((msg, idx) => (
           <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
