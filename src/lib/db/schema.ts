@@ -40,7 +40,7 @@ export const profile = pgTable('profile', {
   userId: text('user_id')
     .notNull()
     .unique()
-    .references(() => user.id, { onDelete: 'cascade' }),
+    .references(() => user.id, { onDelete: 'cascade', onUpdate: 'cascade' }),
   role: roleEnum('role').notNull().default('interviewee'),
   jobTitle: text('job_title'),
   experience: text('experience'), // e.g., "5 years"
@@ -57,11 +57,11 @@ export const meeting = pgTable('meeting', {
   id: text('id').primaryKey(),
   hostId: text('host_id')
     .notNull()
-    .references(() => user.id),
-  guestId: text('guest_id').references(() => user.id),
+    .references(() => user.id, { onUpdate: 'cascade' }),
+  guestId: text('guest_id').references(() => user.id, { onUpdate: 'cascade' }),
   status: meetingStatusEnum('status').notNull().default('scheduled'),
   startTime: timestamp('start_time').notNull(),
-  endTime: timestamp('end_time'),
+  endTime: timestamp('endTime'),
   transcriptUrl: text('transcript_url'),
   recordingUrl: text('recording_url'),
   createdAt: timestamp('created_at').notNull().defaultNow(),
@@ -82,49 +82,6 @@ export const interviewResult = pgTable('interview_result', {
   overallScore: integer('overall_score'),
   feedbackReport: text('feedback_report'),
   createdAt: timestamp('created_at').notNull().defaultNow(),
-});
-
-/**
- * AUTH SUPPORT TABLES (Better-Auth)
- */
-export const session = pgTable('session', {
-  id: text('id').primaryKey(),
-  expiresAt: timestamp('expires_at').notNull(),
-  token: text('token').notNull().unique(),
-  createdAt: timestamp('created_at').notNull().defaultNow(),
-  updatedAt: timestamp('updated_at').notNull().defaultNow(),
-  ipAddress: text('ip_address'),
-  userAgent: text('user_agent'),
-  userId: text('user_id')
-    .notNull()
-    .references(() => user.id, { onDelete: 'cascade' }),
-});
-
-export const account = pgTable('account', {
-  id: text('id').primaryKey(),
-  accountId: text('account_id').notNull(),
-  providerId: text('provider_id').notNull(),
-  userId: text('user_id')
-    .notNull()
-    .references(() => user.id, { onDelete: 'cascade' }),
-  accessToken: text('access_token'),
-  refreshToken: text('refresh_token'),
-  idToken: text('id_token'),
-  accessTokenExpiresAt: timestamp('access_token_expires_at'),
-  refreshTokenExpiresAt: timestamp('refresh_token_expires_at'),
-  scope: text('scope'),
-  password: text('password'),
-  createdAt: timestamp('created_at').notNull().defaultNow(),
-  updatedAt: timestamp('updated_at').notNull().defaultNow(),
-});
-
-export const verification = pgTable('verification', {
-  id: text('id').primaryKey(),
-  identifier: text('identifier').notNull(),
-  value: text('value').notNull(),
-  expiresAt: timestamp('expires_at').notNull(),
-  createdAt: timestamp('created_at').notNull().defaultNow(),
-  updatedAt: timestamp('updated_at').notNull().defaultNow(),
 });
 
 /**

@@ -1,34 +1,31 @@
-import { auth } from "@/lib/auth";
-import { headers } from "next/headers";
-import { NextResponse, type NextRequest } from "next/server";
+import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
+import { NextResponse } from "next/server";
 
-const protectedRoutes = ["/dashboard", "/meeting", "/onboarding"];
+const isPublicRoute = createRouteMatcher([
+  "/",
+  "/sign-in(.*)", 
+  "/sign-up(.*)",
+  "/api/webhooks(.*)"
+]);
 
-export async function proxy(request: NextRequest) {
-  const { pathname } = request.nextUrl;
+export const proxy = clerkMiddleware(async (auth, request) => {
+  const { userId } = await auth();
 
-  // Check if current path is one of the protected routes
-  const isProtectedRoute = protectedRoutes.some((route) =>
-    pathname.startsWith(route)
-  );
-
-  if (isProtectedRoute) {
-    const session = await auth.api.getSession({
-      headers: await headers(),
-    });
-
-    if (!session) {
-      return NextResponse.redirect(new URL("/sign-in", request.url));
-    }
+  // If user is logged in and tries to visit the landing page, redirect to dashboard
+  if (userId && request.nextUrl.pathname === "/") {
+    return NextResponse.redirect(new URL("/dashboard", request.url));
   }
 
-  return NextResponse.next();
-}
+  if (!isPublicRoute(request)) {
+    await auth.protect();
+  }
+});
 
 export const config = {
   matcher: [
-    "/dashboard/:path*",
-    "/meeting/:path*",
-    "/onboarding/:path*",
+    // Skip Next.js internals and all static files, unless found in search params
+    '/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)',
+    // Always run for API routes
+    '/(api|trpc)(.*)',
   ],
 };

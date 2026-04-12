@@ -1,15 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { AccessToken } from "livekit-server-sdk";
-import { jwtDecode } from "jwt-decode";
-import { auth } from "@/lib/auth"; // Import your auth instance
+import { auth, currentUser } from "@clerk/nextjs/server";
 
 export async function POST(req: NextRequest) {
-  // Add these 3 lines temporarily
   try {
     // 1. Get the session to ensure user is logged in
-    const session = await auth.api.getSession({ headers: req.headers });
+    const { userId } = await auth();
+    const user = await currentUser();
 
-    if (!session || !session.user) {
+    if (!userId || !user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -21,8 +20,6 @@ export async function POST(req: NextRequest) {
     }
 
     // 3. Create the Access Token
-    // CRITICAL FIX: Use session.user.id as 'identity' to guarantee uniqueness.
-    // Use session.user.name as 'name' for display purposes.
     const apiKey = process.env.LIVEKIT_API_KEY;
     const apiSecret = process.env.LIVEKIT_API_SECRET;
 
@@ -31,8 +28,8 @@ export async function POST(req: NextRequest) {
     }
 
     const token = new AccessToken(apiKey, apiSecret, {
-      identity: session.user.id, // Unique ID (fixes the collision bug)
-      name: session.user.name || "User", // Display Name
+      identity: userId,
+      name: `${user.firstName} ${user.lastName}`.trim() || user.username || "User",
     });
 
     // 4. Add grants
@@ -46,8 +43,6 @@ export async function POST(req: NextRequest) {
 
     // 5. Return the JWT
     const tokenValue = await token.toJwt();
-    const decoded = jwtDecode(tokenValue);
-    console.log("DEBUG TOKEN PAYLOAD:", JSON.stringify(decoded, null, 2));
 
     return NextResponse.json({ token: tokenValue });
 
