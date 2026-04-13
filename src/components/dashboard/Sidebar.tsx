@@ -7,7 +7,6 @@ import {
   User as UserIcon, 
   LogOut,
   Calendar,
-  Settings,
   Award,
   MessageSquareText
 } from "lucide-react";
@@ -28,7 +27,6 @@ export function Sidebar({ user }: SidebarProps) {
     { label: "Feedback", icon: MessageSquareText, href: "/feedback" },
     { label: "Meetings", icon: Video, href: "/meetings" },
     { label: "Calendar", icon: Calendar, href: "/calendar" },
-    { label: "Settings", icon: Settings, href: "/settings" },
   ];
 
   return (

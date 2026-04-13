@@ -2,11 +2,12 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Video, UserPlus, Copy, ArrowRight, Play, RefreshCw } from "lucide-react";
+import { Video, UserPlus, Copy, ArrowRight, Play, RefreshCw, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { deleteProfile } from "@/actions/profile";
 import { createMeeting } from "@/actions/meeting";
+import { ScheduleModal } from "@/components/interview/ScheduleModal";
 import {
   Dialog,
   DialogContent,
@@ -23,6 +24,7 @@ interface DashboardClientProps {
 export function InterviewClient({ role }: DashboardClientProps) {
   const router = useRouter();
   const [showMeetingModal, setShowMeetingModal] = useState(false);
+  const [showScheduleModal, setShowScheduleModal] = useState(false);
   const [meetingLink, setMeetingLink] = useState("");
   const [joinValue, setJoinValue] = useState("");
 
@@ -88,13 +90,23 @@ export function InterviewClient({ role }: DashboardClientProps) {
               Create a high-quality video room instantly. Share the generated link with your candidates to begin.
             </p>
           </div>
-          <Button 
-            onClick={handleStartMeeting}
-            className="w-full h-16 bg-black text-white hover:bg-gray-800 rounded-2xl text-lg font-black flex items-center justify-center gap-3 transition-all"
-          >
-            Start New Meeting
-            <ArrowRight size={20} />
-          </Button>
+          <div className="flex flex-col gap-3">
+            <Button 
+                onClick={handleStartMeeting}
+                className="w-full h-16 bg-black text-white hover:bg-gray-800 rounded-2xl text-lg font-black flex items-center justify-center gap-3 transition-all"
+            >
+                Start New Meeting
+                <ArrowRight size={20} />
+            </Button>
+            <Button 
+                onClick={() => setShowScheduleModal(true)}
+                variant="outline"
+                className="w-full h-16 bg-white border-2 border-[#111111] text-[#111111] hover:bg-[#F0F0ED] rounded-2xl text-lg font-black flex items-center justify-center gap-3 transition-all"
+            >
+                Schedule for Later
+                <Calendar size={20} />
+            </Button>
+          </div>
         </section>
       ) : (
         <section className="bg-white p-10 rounded-[2.5rem] border border-[#EAEAEA] shadow-soft flex flex-col justify-between group hover:border-[#B8FF3B] transition-all">
@@ -186,6 +198,8 @@ export function InterviewClient({ role }: DashboardClientProps) {
           </div>
         </DialogContent>
       </Dialog>
+
+      <ScheduleModal open={showScheduleModal} onOpenChange={setShowScheduleModal} />
     </div>
   );
 }
