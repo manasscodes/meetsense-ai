@@ -197,11 +197,3 @@ Distributed under the MIT License. See `LICENSE.txt` for more information.
 
 
 ---
-
-**Copy this and paste it into your `README.md` file.** Then commit it:
-
-```bash
-git add README.md
-git commit -m "docs: create professional README"
-git push
-```
