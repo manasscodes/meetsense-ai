@@ -6,6 +6,7 @@ import { Video, UserPlus, Copy, ArrowRight, Play, RefreshCw } from "lucide-react
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { deleteProfile } from "@/actions/profile";
+import { createMeeting } from "@/actions/meeting";
 import {
   Dialog,
   DialogContent,
@@ -29,11 +30,16 @@ export function InterviewClient({ role }: DashboardClientProps) {
     return Math.random().toString(36).substring(2, 12);
   };
 
-  const handleStartMeeting = () => {
-    const roomId = generateRoomId();
-    const link = `${window.location.origin}/meeting/${roomId}`;
-    setMeetingLink(link);
-    setShowMeetingModal(true);
+  const handleStartMeeting = async () => {
+    const result = await createMeeting('interview');
+    
+    if (result.success && result.meetingId) {
+      const link = `${window.location.origin}/meeting/${result.meetingId}`;
+      setMeetingLink(link);
+      setShowMeetingModal(true);
+    } else {
+      alert("Failed to start interview. Please try again.");
+    }
   };
 
   const handleJoinMeeting = () => {
@@ -119,6 +125,7 @@ export function InterviewClient({ role }: DashboardClientProps) {
           </div>
         </section>
       )}
+      </div>
 
       {/* Secondary Quick Info Card */}
       <section className="bg-[#111111] p-10 rounded-[2.5rem] text-white flex flex-col justify-center relative overflow-hidden">
@@ -180,6 +187,5 @@ export function InterviewClient({ role }: DashboardClientProps) {
         </DialogContent>
       </Dialog>
     </div>
-  </div>
-);
+  );
 }

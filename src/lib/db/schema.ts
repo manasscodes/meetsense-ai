@@ -60,10 +60,14 @@ export const meeting = pgTable('meeting', {
     .references(() => user.id, { onUpdate: 'cascade' }),
   guestId: text('guest_id').references(() => user.id, { onUpdate: 'cascade' }),
   status: meetingStatusEnum('status').notNull().default('scheduled'),
+  type: text('type').notNull().default('normal'),
   startTime: timestamp('start_time').notNull(),
   endTime: timestamp('endTime'),
   transcriptUrl: text('transcript_url'),
   recordingUrl: text('recording_url'),
+  hostTranscript: text('host_transcript'),
+  guestTranscript: text('guest_transcript'),
+  summary: text('summary'),
   createdAt: timestamp('created_at').notNull().defaultNow(),
 });
 

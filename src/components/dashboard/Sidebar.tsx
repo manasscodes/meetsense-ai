@@ -8,7 +8,8 @@ import {
   LogOut,
   Calendar,
   Settings,
-  Award
+  Award,
+  MessageSquareText
 } from "lucide-react";
 import { SignOutButton } from "@clerk/nextjs";
 
@@ -24,6 +25,7 @@ export function Sidebar({ user }: SidebarProps) {
   const navItems = [
     { label: "Dashboard", icon: LayoutDashboard, href: "/dashboard" },
     { label: "Interview", icon: Award, href: "/interview" },
+    { label: "Feedback", icon: MessageSquareText, href: "/feedback" },
     { label: "Meetings", icon: Video, href: "/meetings" },
     { label: "Calendar", icon: Calendar, href: "/calendar" },
     { label: "Settings", icon: Settings, href: "/settings" },
